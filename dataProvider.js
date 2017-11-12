@@ -3,16 +3,9 @@ var vscode = require( 'vscode' );
 var path = require( "path" );
 var cheerio = require( 'cheerio' ); // https://github.com/cheeriojs/cheerio
 
-var showTimes = false;
-
 var failed = false;
 
-var tests = [];
-var moduleList = {};
-var results = {};
-var asserts = {};
-var times = {};
-var modules = {};
+var elements = [];
 
 class QunitTestResultsDataProvider
 {
@@ -20,86 +13,95 @@ class QunitTestResultsDataProvider
     {
         this._context = _context;
 
-        tests = [];
-        moduleList = {};
-        results = {};
-        asserts = {};
-        times = {};
-        modules = {};
+        failed = false;
+        elements = [];
 
         var $ = cheerio.load( html );
         $( '#qunit-tests > li' ).each( function()
         {
             var test = $( this ).find( "span.test-name" ).text();
-            tests.push( "test>" + test );
-            // tests.push( test );
-            results[ test ] = $( this ).prop( "class" );
-            times[ test ] = $( this ).find( "span.runtime" ).text();
+            var result = $( this ).prop( "class" );
+            var time = $( this ).find( "> span.runtime" ).text();
             var module = $( this ).find( "span.module-name" ).text();
-            if( module )
+            var asserts = [];
+
+            if( result === "fail" )
             {
-                moduleList[ "module>" + module ] = true;
-                // moduleList.push( module );
-                modules[ "test>" + test ] = module;
+                failed = true;
             }
+
             $( this ).find( ".qunit-assert-list > li" ).each( function( i )
             {
-                if( asserts[ test ] === undefined )
-                {
-                    asserts[ test ] = [];
-                }
-                asserts[ test ].push( test + ":" + i + ":" + $( this ).prop( "class" ) );
+                asserts.push( { type: "assert", test: test, name: $( this ).prop( "class" ), index: i } );
             } );
-        } );
 
-        failed = parseInt( $( '#qunit-testresult > .failed' ).text() );
+            var testElement = {
+                type: "test", name: test, result: result, asserts: asserts, time: time
+            };
+
+            if( !module )
+            {
+                elements.push( testElement );
+            }
+            else
+            {
+                function findModule( e )
+                {
+                    return e.type === "module" && e.name === this;
+                }
+
+                var moduleElement;
+                var parent = elements;
+                module.split( '>' ).map( function( m )
+                {
+                    var child = parent.find( findModule, m.trim() );
+                    if( child === undefined )
+                    {
+                        moduleElement = {
+                            type: "module", name: m.trim(), result: result, elements: []
+                        };
+                        parent.push( moduleElement );
+                        parent = moduleElement.elements;
+                    }
+                    else
+                    {
+                        moduleElement = child;
+                        parent = moduleElement.elements;
+                    }
+                    if( result === "fail" )
+                    {
+                        moduleElement.result = result;
+                    }
+                } );
+
+                moduleElement.elements.push( testElement );
+            }
+        } );
 
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-        vscode.window.onDidChangeActiveTextEditor( () =>
-        {
-            this._refreshTree();
-        } );
-        vscode.workspace.onDidChangeTextDocument( () =>
-        {
-            this._refreshTree();
-        } );
-    }
-    get activeEditor()
-    {
-        return vscode.window.activeTextEditor || null;
     }
     getChildren( element )
     {
         if( !element )
         {
-            return [ "Tests" ];
+            return [ { type: "overall", name: "Overall" }];
         }
-        else if( element === "Tests" )
+        else if( element.type === "overall" )
         {
-            var topLevel = Object.keys( moduleList );
-            tests.map( function( test )
-            {
-                if( modules[ test ] !== undefined )
-                {
-                    topLevel.push( test );
-                }
-            } );
-            return topLevel;
+            return elements;
         }
-        else
+        else if( element.type === "module" )
         {
-            var parts = element.split( '>' );
-            var name = parts.slice( 1 ).join( '>' );
-            if( parts[ 0 ] === "module" )
-            {
-                return undefined;
-            }
-            else if( parts[ 0 ] === "test" )
-            {
-                return asserts[ name ];
-            }
-            return undefined;
+            return element.elements;
+        }
+        else if( element.type === "test" )
+        {
+            return element.asserts;
+        }
+        else if( element.type === "asserts" )
+        {
+            return element.results;
         }
     }
 
@@ -114,47 +116,61 @@ class QunitTestResultsDataProvider
 
     getTreeItem( element )
     {
-        var mainparts = element.split( '>' );
-        var name = mainparts.length > 1 ? mainparts.slice( 1 ).join( '>' ) : element;
+        let treeItem = new vscode.TreeItem( element.name );
 
-        var editor = vscode.window.activeTextEditor;
-        let treeItem = new vscode.TreeItem( name );
-        var parts = element.split( ':' );
-
-        if( name === "Tests" )
+        if( element.type === "overall" )
         {
             var status = failed > 0 ? "fail" : "pass";
             treeItem.collapsibleState = this.getState( status );
             treeItem.iconPath = this._getIcon( status );
         }
-        else if( parts.length > 2 )
+        else if( element.type === "test" )
         {
-            treeItem.label = parts[ 2 ];
-            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
-            treeItem.iconPath = this._getIcon( parts[ 2 ] );
+            if( vscode.workspace.getConfiguration( 'vscode-qunit' ).showExecutionTimes )
+            {
+                treeItem.label += " (" + element.time + ")";
+            }
+
+            treeItem.collapsibleState = this.getState( element.result );
+            treeItem.iconPath = this._getIcon( element.result );
             treeItem.command = {
                 command: "vscode-qunit.revealTest",
                 title: "",
                 arguments: [
-                    parts[ 0 ],
-                    parts[ 1 ]
+                    "test",
+                    element.name
                 ]
             };
         }
-        else
+        else if( element.type === "module" )
         {
-            if( showTimes )
-            {
-                treeItem.label += " (" + times[ element ] + ")";
-            }
-
-            treeItem.collapsibleState = this.getState( results[ name ] );
-            treeItem.iconPath = this._getIcon( results[ name ] );
+            treeItem.collapsibleState = this.getState( element.result );
+            treeItem.iconPath = this._getIcon( element.result );
             treeItem.command = {
                 command: "vscode-qunit.revealTest",
                 title: "",
                 arguments: [
-                    name
+                    "module",
+                    element.name
+                ]
+            };
+        }
+        else if( element.type === "asserts" )
+        {
+            treeItem.collapsibleState = this.getState( element.result );
+            treeItem.iconPath = this._getIcon( element.name );
+        }
+        else if( element.type === "assert" )
+        {
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+            treeItem.iconPath = this._getIcon( element.name );
+            treeItem.command = {
+                command: "vscode-qunit.revealTest",
+                title: "",
+                arguments: [
+                    "test",
+                    element.test,
+                    element.index
                 ]
             };
         }

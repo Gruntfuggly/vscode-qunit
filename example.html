@@ -1,87 +1,812 @@
-QUnit.test("locations can be compared", function() { var location1 = { x: 1, y: 2 }; var location2 = { x: 2, y: 3 }; var location3 = { x: 1, y: 2 }; ok(SameLocation(location1, location1)); ok(!SameLocation(location1, location2)); ok(SameLocation(location1,
-location3)); }); QUnit.module("world") { QUnit.test("world can be constructed", function() { var world = new World(10, 20); equal(world.GetWidth(), 10); equal(world.GetHeight(), 20); }); QUnit.test("world can be constructed with alternate size", function()
-{ var world = new World(11, 8); equal(world.GetWidth(), 11); equal(world.GetHeight(), 8); }); QUnit.test("world is full of rock", function() { var world = new World(2, 2); world.Build(); ok(world.GetContent({ x: 0, y: 0 }) instanceof Rock); ok(world.GetContent({
-x: 1, y: 0 }) instanceof Rock); ok(world.GetContent({ x: 0, y: 1 }) instanceof Rock); ok(world.GetContent({ x: 1, y: 1 }) instanceof Rock); }); QUnit.test("world is empty space surrounded by rock", function() { var world = new World(4, 4); world.Build();
-ok(world.GetContent({ x: 1, y: 1 }) instanceof EmptySpace); ok(world.GetContent({ x: 2, y: 1 }) instanceof EmptySpace); ok(world.GetContent({ x: 1, y: 2 }) instanceof EmptySpace); ok(world.GetContent({ x: 2, y: 2 }) instanceof EmptySpace); }); } QUnit.test("catboy
-can created and placed in world", function() { var world = new World(3, 4); world.Build(); ok(world.GetContent({ x: 1, y: 1 }) instanceof EmptySpace); world.AddEntity(new Catboy({ x: 1, y: 1 }, world)); // ok( world.GetEntity( { x: 1, y: 1 } ) instanceof
-Catboy ); ok(world.GetEntity({ x: 1, y: 1 }) instanceof EmptySpace); ok(false); }); QUnit.test("item can't be destroyed", function() { var rock = new Content(); ok(rock.IsPermanent()); }); QUnit.test("earth can be destroyed", function() { var earth =
-new Earth(); ok(!earth.IsPermanent()); }); QUnit.test("earth-ledge can be destroyed", function() { var earthLedge = new EarthLedge(); ok(!earthLedge.IsPermanent()); }); QUnit.test("demon can be destroyed", function() { var demon = new Demon({ x: 0, y:
-0 }, new World()); ok(!demon.IsPermanent()); }); QUnit.test("troll can be destroyed", function() { var troll = new Troll({ x: 0, y: 0 }, new World()); ok(!troll.IsPermanent()); }); QUnit.test("ghost can be destroyed", function() { var ghost = new Ghost({
-x: 0, y: 0 }, new World()); ok(!ghost.IsPermanent()); }); QUnit.test("phantom can be destroyed", function() { var phantom = new Phantom({ x: 0, y: 0 }, new World()); ok(!phantom.IsPermanent()); }); QUnit.test("item can't be occupied", function() { var
-item = new Content(); ok(!item.CanBeOccupied()); }); QUnit.test("empty space can be occupied", function() { var emptySpace = new EmptySpace(); ok(emptySpace.CanBeOccupied(new Player())); }); QUnit.test("ladder can be occupied", function() { var ladder
-= new Ladder(); ok(ladder.CanBeOccupied(new Player())); }); QUnit.test("catboy should drop", function() { var catboy = new Catboy(); ok(catboy.ShouldDrop()); }); QUnit.test("catgirl should drop", function() { var catgirl = new Catgirl(); ok(catgirl.ShouldDrop());
-}); QUnit.test("boulder should drop", function() { var boulder = new Boulder(); ok(boulder.ShouldDrop()); }); QUnit.test("enemy should drop", function() { var enemy = new Enemy(); ok(enemy.ShouldDrop()); }); QUnit.test("ghost should not drop", function()
-{ var ghost = new Ghost({ x: 0, y: 0 }, new World()); ok(!ghost.ShouldDrop()); }); QUnit.test("entity drops", function() { var world = new World(3, 4); world.Build(); var entity = new Entity({ x: 1, y: 2 }, world); world.AddEntity(entity); world.Update();
-deepEqual(entity.location, { x: 1, y: 1 }); ok(world.GetEntity({ x: 1, y: 1 }) instanceof Entity); }); QUnit.test("ghost doesn't drop", function() { var world = new World(3, 4); world.Build(); world.PlaceContent(new EmptySpace(), { x: 1, y: 1 }); var
-ghost = new Ghost({ x: 1, y: 2 }, world); world.AddEntity(ghost); world.Update(); deepEqual(ghost.location, { x: 1, y: 2 }); ok(world.GetEntity({ x: 1, y: 2 }) instanceof Entity); }); QUnit.test("entity doesn't drop off ladder", function() { var world
-= new World(3, 4); world.Build(); world.PlaceContent(new EmptySpace(), { x: 1, y: 1 }); world.PlaceContent(new Ladder(), { x: 1, y: 2 }); var entity = new Entity({ x: 1, y: 2 }, world); world.AddEntity(entity); world.Update(); deepEqual(entity.location,
-{ x: 1, y: 2 }); ok(world.GetEntity({ x: 1, y: 2 }) instanceof Entity); }); QUnit.test("catboy can move horizontally", function() { var world = new World(4, 4); world.Build(); var catboy = new Catboy({ x: 1, y: 1 }, world); catboy.Move(1, 0); deepEqual(catboy.location,
-{ x: 2, y: 1 }); catboy.Move(-1, 0); deepEqual(catboy.location, { x: 1, y: 1 }); }); QUnit.test("catboy can be blocked", function() { var world = new World(4, 4); world.Build(); var catboy = new Catboy({ x: 1, y: 1 }, world); catboy.Move(-1, 0); deepEqual(catboy.location,
-{ x: 1, y: 1 }); }); QUnit.test("catboy destroys items", function() { var world = new World(4, 4); world.Build(); world.PlaceContent(new Earth(), { x: 2, y: 1 }); var catboy = new Catboy({ x: 1, y: 1 }, world); ok(world.GetContent({ x: 2, y: 1 }) instanceof
-Earth); catboy.Move(1, 0); deepEqual(catboy.location, { x: 2, y: 1 }); ok(world.GetContent({ x: 2, y: 1 }) instanceof EmptySpace); }); QUnit.test("catboy goes up ladder into emptyspace", function() { var world = new World(3, 4); world.Build(); var catboy
-= new Catboy({ x: 1, y: 1 }, world); catboy.Move(0, 1); deepEqual(catboy.location, { x: 1, y: 1 }); var ladder = new Ladder(); world.PlaceContent(ladder, { x: 1, y: 1 }); catboy.Move(0, 1); deepEqual(catboy.location, { x: 1, y: 2 }); }); QUnit.test("catboy
-goes up ladder", function() { var world = new World(3, 4); world.Build(); var catboy = new Catboy({ x: 1, y: 1 }, world); ok(!catboy.Move(0, 1)); deepEqual(catboy.location, { x: 1, y: 1 }); var ladder = new Ladder(); world.PlaceContent(ladder, { x: 1,
-y: 2 }); ok(!catboy.Move(0, 1)); deepEqual(catboy.location, { x: 1, y: 1 }); world.PlaceContent(ladder, { x: 1, y: 1 }); ok(catboy.Move(0, 1)); deepEqual(catboy.location, { x: 1, y: 2 }); }); QUnit.test("catboy can be blocked at top of ladder", function()
-{ var world = new World(3, 4); world.Build(); var catboy = new Catboy({ x: 1, y: 1 }, world); world.PlaceContent(new Ladder(), { x: 1, y: 1 }); world.AddEntity(new Enemy({ x: 1, y: 2 }, world)); ok(!catboy.Move(0, 1)); deepEqual(catboy.location, { x:
-1, y: 1 }); }); QUnit.test("catboy goes go down ladder", function() { var world = new World(3, 4); world.Build(); var catboy = new Catboy({ x: 1, y: 2 }, world); var ladder = new Ladder(); world.PlaceContent(ladder, { x: 1, y: 2 }); world.PlaceContent(ladder,
-{ x: 1, y: 1 }); catboy.Move(0, -1); deepEqual(catboy.location, { x: 1, y: 1 }); }); QUnit.test("catboy can do down ladder from empty space", function() { var world = new World(3, 4); world.Build(); var catboy = new Catboy({ x: 1, y: 2 }, world); var
-ladder = new Ladder(); world.PlaceContent(ladder, { x: 1, y: 1 }); catboy.Move(0, -1); deepEqual(catboy.location, { x: 1, y: 1 }); }); QUnit.test("catboy can't drop off ladder into earth", function() { var world = new World(3, 4); world.Build(); var catboy
-= new Catboy({ x: 1, y: 2 }, world); var ladder = new Ladder(); world.PlaceContent(ladder, { x: 1, y: 2 }); var earth = new Earth(); world.PlaceContent(earth, { x: 1, y: 1 }); catboy.Move(0, -1); deepEqual(catboy.location, { x: 1, y: 2 }); }); QUnit.test("catboy
-drops off ladder into empty space", function() { var world = new World(3, 4); world.Build(); var catboy = new Catboy({ x: 1, y: 2 }, world); var ladder = new Ladder(); world.PlaceContent(ladder, { x: 1, y: 2 }); var emptySpace = new EmptySpace(); world.PlaceContent(emptySpace,
-{ x: 1, y: 1 }); catboy.Move(0, -1); deepEqual(catboy.location, { x: 1, y: 1 }); }); QUnit.test("entity can be added to world", function() { var world = new World(3, 3); world.Build(); world.AddEntity(new Entity({ x: 1, y: 1 }, world)); ok(world.GetEntity({
-x: 1, y: 1 }) instanceof Entity); }); QUnit.test("entities can be updated", function() { var world = new World(3, 4); world.Build(); world.AddEntity(new Boulder({ x: 1, y: 2 }, world)); ok(world.GetEntity({ x: 1, y: 2 }) instanceof Boulder); world.PlaceContent(new
-EmptySpace(), { x: 1, y: 1 }); world.Update(); ok(world.GetEntity({ x: 1, y: 1 }) instanceof Boulder); }); QUnit.test("update world returns true until entities are static", function() { var world = new World(3, 5); world.Build(); world.AddEntity(new Boulder({
-x: 1, y: 3 }, world)); ok(world.GetEntity({ x: 1, y: 3 }) instanceof Boulder); world.PlaceContent(new EmptySpace(), { x: 1, y: 2 }); world.PlaceContent(new EmptySpace(), { x: 1, y: 1 }); ok(world.Update()); ok(world.GetEntity({ x: 1, y: 2 }) instanceof
-Boulder); ok(world.Update()); ok(world.GetEntity({ x: 1, y: 1 }) instanceof Boulder); ok(!world.Update()); }); QUnit.test("catboy is blocked by other entities", function() { var world = new World(5, 3); world.Build(); var catboy = new Catboy({ x: 1, y:
-1 }, world); world.AddEntity(new Catgirl({ x: 2, y: 1 }, world)); catboy.Move(1, 0); deepEqual(catboy.location, { x: 1, y: 1 }); }); QUnit.test("entity can't push", function() { var entity = new Entity({ x: 0, y: 0 }, new World()); ok(!entity.CanPush());
-}); QUnit.test("player can push", function() { var player = new Player({ x: 0, y: 0 }, new World()); ok(player.CanPush()); }); QUnit.test("only active player can push", function() { var player = new Player({ x: 0, y: 0 }, new World()); ok(player.CanPush());
-player.SetActive(false); ok(!player.CanPush()); }); QUnit.test("boulders can be pushed", function() { var boulder = new Boulder(); ok(boulder.CanBePushed()); }); QUnit.test("catboy pushes boulder", function() { var world = new World(5, 3); world.Build();
-var catboy = new Catboy({ x: 1, y: 1 }, world); world.AddEntity(new Boulder({ x: 2, y: 1 }, world)); world.PlaceContent(new EmptySpace(), { x: 3, y: 1 }); catboy.Move(1, 0); deepEqual(catboy.location, { x: 1, y: 1 }); ok(world.GetEntity({ x: 3, y: 1 })
-instanceof Boulder); }); QUnit.test("catboy can't push boulder into rock", function() { var world = new World(4, 3); world.Build(); var catboy = new Catboy({ x: 1, y: 1 }, world); world.AddEntity(new Boulder({ x: 2, y: 1 }, world)); catboy.Move(1, 0);
-deepEqual(catboy.location, { x: 1, y: 1 }); ok(world.GetEntity({ x: 2, y: 1 }) instanceof Boulder); }); QUnit.test("catboy can't push boulder into earth", function() { var world = new World(5, 3); world.Build(); world.PlaceContent(new Earth(), { x: 3,
-y: 1 }); var catboy = new Catboy({ x: 1, y: 1 }, world); world.AddEntity(new Boulder({ x: 2, y: 1 }, world)); catboy.Move(1, 0); deepEqual(catboy.location, { x: 1, y: 1 }); ok(world.GetEntity({ x: 2, y: 1 }) instanceof Boulder); }); QUnit.test("boulder
-can't push boulder", function() { var world = new World(6, 3); world.Build(); var catboy = new Catboy({ x: 1, y: 1 }, world); world.AddEntity(new Boulder({ x: 2, y: 1 }, world)); world.AddEntity(new Boulder({ x: 3, y: 1 }, world)); catboy.Move(1, 0);
-deepEqual(catboy.location, { x: 1, y: 1 }); ok(world.GetEntity({ x: 2, y: 1 }) instanceof Boulder); ok(world.GetEntity({ x: 3, y: 1 }) instanceof Boulder); ok(world.GetEntity({ x: 4, y: 1 }) === undefined); }); QUnit.test("dispatch reduces population",
-function() { var world = new World(1, 1); var demon = new Demon({ x: 2, y: 1 }, world); world.AddEntity(demon); equal(world.population, 1); demon.Dispatch(); equal(world.population, 0); }); QUnit.test("enemy can be despatched", function() { var world
-= new World(4, 3); world.Build(); world.AddEntity(new Demon({ x: 2, y: 1 }, world)); equal(world.population, 1); var catboy = new Catboy({ x: 1, y: 1 }, world); world.AddEntity(catboy); catboy.Move(1, 0); deepEqual(catboy.location, { x: 2, y: 1 }); ok(world.GetEntity({
-x: 2, y: 1 }) instanceof Catboy); equal(world.population, 0); }); QUnit.test("world can be populated from string", function() { var world1 = new World(3, 3, ""); world1.Build(); ok(world1.GetContent({ x: 1, y: 1 }) instanceof EmptySpace); var world2 =
-new World(3, 3, " "); world2.Build(); ok(world2.GetContent({ x: 1, y: 1 }) instanceof EmptySpace); var world3 = new World(3, 3, "%"); world3.Build(); ok(world3.GetContent({ x: 1, y: 1 }) instanceof Earth); var world4 = new World(3, 3, "="); world4.Build();
-ok(world4.GetContent({ x: 1, y: 1 }) instanceof Ladder); var world5 = new World(3, 3, "-"); world5.Build(); ok(world5.GetContent({ x: 1, y: 1 }) instanceof Ledge); var world6 = new World(3, 3, "~"); world6.Build(); ok(world6.GetContent({ x: 1, y: 1 })
-instanceof EarthLedge); var world7 = new World(3, 3, "o"); world7.Build(); ok(world7.GetEntity({ x: 1, y: 1 }) instanceof Boulder); var world8 = new World(3, 3, "D"); world8.Build(); ok(world8.GetEntity({ x: 1, y: 1 }) instanceof Demon); var world9 =
-new World(3, 3, "T"); world9.Build(); ok(world9.GetEntity({ x: 1, y: 1 }) instanceof Troll); var world10 = new World(3, 3, "G"); world10.Build(); ok(world10.GetEntity({ x: 1, y: 1 }) instanceof Ghost); var world11 = new World(3, 3, "P"); world11.Build();
-ok(world11.GetEntity({ x: 1, y: 1 }) instanceof Phantom); var world14 = new World(3, 3, "#"); world14.Build(); ok(world14.GetContent({ x: 1, y: 1 }) instanceof Rock); var level = " % = - " + " 1 D o ~T" + "##G### #P"; var world15 = new World(11, 5, level);
-world15.Build(); ok(world15.GetContent({ x: 1, y: 1 }) instanceof Rock); ok(world15.GetEntity({ x: 3, y: 1 }) instanceof Ghost); ok(world15.GetContent({ x: 7, y: 1 }) instanceof EmptySpace); ok(world15.GetEntity({ x: 9, y: 1 }) instanceof Phantom); ok(world15.GetEntity({
-x: 4, y: 2 }) instanceof Demon); ok(world15.GetEntity({ x: 6, y: 2 }) instanceof Boulder); ok(world15.GetContent({ x: 8, y: 2 }) instanceof EarthLedge); ok(world15.GetEntity({ x: 9, y: 2 }) instanceof Troll); ok(world15.GetContent({ x: 2, y: 3 }) instanceof
-Earth); ok(world15.GetContent({ x: 5, y: 3 }) instanceof Ladder); ok(world15.GetContent({ x: 8, y: 3 }) instanceof Ledge); }); QUnit.test("at beginning is true for empty journal", function() { var world = new World(4, 3); world.Build(); ok(world.journal.AtBeginning());
-}); QUnit.test("at end is true if journal has not been rewound", function() { var world = new World(4, 3); world.Build(); ok(world.journal.entries.length === 0); var entity = new Entity({ x: 1, y: 1 }, world); ok(entity.Move(1, 0)); ok(world.journal.AtEnd());
-}); QUnit.test("journal get previous returns previous entry", function() { var journal = new Journal(); journal.Add({ action: Action.eMove, entity: new Entity(), movement: { dx: 1, dy: -1 } }); var entry = journal.GetPrevious(); equal(entry.action, Action.eMove);
-equal(entry.movement.dx, 1); equal(entry.movement.dy, -1); }); QUnit.test("journal get next returns next entry", function() { var journal = new Journal(); journal.Add({ action: Action.eMove, entity: new Entity(), movement: { dx: 1, dy: -1 } }); journal.Add({
-action: Action.eMove, entity: new Entity(), movement: { dx: 0, dy: 0 } }); var entry = journal.GetPrevious(); entry = journal.GetPrevious(); ok(journal.AtBeginning()); equal(entry.action, Action.eMove); equal(entry.movement.dx, 1); equal(entry.movement.dy,
--1); entry = journal.GetNext(); equal(entry.action, Action.eMove); equal(entry.movement.dx, 1); equal(entry.movement.dy, -1); ok(!journal.AtEnd()); }); QUnit.test("entity movement is added to journal", function() { var world = new World(4, 3); world.Build();
-ok(world.journal.entries.length === 0); var entity = new Entity({ x: 1, y: 1 }, world); ok(entity.Move(1, 0)); ok(world.journal.entries.length === 1); var lastEntry = world.journal.entries[world.journal.entries.length - 1]; equal(lastEntry.action, Action.eMove);
-ok(lastEntry.entity instanceof Entity); equal(lastEntry.movement.dx, 1); equal(lastEntry.movement.dy, 0); }); QUnit.test("entity drop is added to journal", function() { var world = new World(3, 4); world.Build(); ok(world.journal.entries.length === 0);
-var entity = new Entity({ x: 1, y: 2 }, world); ok(entity.Update()); ok(world.journal.entries.length === 1); var lastEntry = world.journal.entries[world.journal.entries.length - 1]; equal(lastEntry.action, Action.eDrop); ok(lastEntry.entity instanceof
-Entity); equal(lastEntry.movement.dx, 0); equal(lastEntry.movement.dy, -1); }); QUnit.test("rewind returns false when the journal is empty", function() { var world = new World(4, 3); world.Build(); ok(!world.Rewind()); }); QUnit.test("rewind moves player
-back", function() { var world = new World(4, 3); world.Build(); ok(world.journal.entries.length === 0); var entity = new Entity({ x: 1, y: 1 }, world); ok(entity.Move(1, 0)); deepEqual(entity.location, { x: 2, y: 1 }); ok(!world.Rewind()); deepEqual(entity.location,
-{ x: 1, y: 1 }); ok(!world.Rewind()); }); QUnit.test("rewind lifts player back up", function() { var world = new World(4, 3); world.Build(); ok(world.journal.entries.length === 0); var entity = new Entity({ x: 1, y: 2 }, world); ok(entity.Update()); deepEqual(entity.location,
-{ x: 1, y: 1 }); ok(world.Rewind()); deepEqual(entity.location, { x: 1, y: 2 }); ok(!world.Rewind()); }); QUnit.test("fastforward replays previous moves", function() { var world = new World(4, 3); world.Build(); ok(world.journal.entries.length === 0);
-var entity = new Entity({ x: 1, y: 1 }, world); ok(entity.Move(1, 0)); deepEqual(entity.location, { x: 2, y: 1 }); ok(!world.Rewind()); deepEqual(entity.location, { x: 1, y: 1 }); ok(!world.FastForward()); deepEqual(entity.location, { x: 2, y: 1 }); });
-QUnit.test("journal peek returns current entry", function() { var world = new World(4, 4); world.Build(); ok(world.journal.entries.length === 0); var entity = new Entity({ x: 1, y: 3 }, world); ok(entity.Update()); var lastEntry = world.journal.Peek();
-equal(lastEntry.action, Action.eDrop); ok(lastEntry.entity instanceof Entity); equal(lastEntry.movement.dx, 0); equal(lastEntry.movement.dy, -1); }); QUnit.test("fastforward drops player down", function() { var world = new World(4, 4); world.Build();
-ok(world.journal.entries.length === 0); var entity = new Entity({ x: 1, y: 3 }, world); ok(entity.Update()); ok(entity.Update()); ok(!entity.Update()); deepEqual(entity.location, { x: 1, y: 1 }); ok(world.Rewind()); ok(world.Rewind()); ok(!world.Rewind());
-deepEqual(entity.location, { x: 1, y: 3 }); ok(world.FastForward()); }); QUnit.test("adding to journal truncates later moves", function() { var world = new World(6, 3); world.Build(); ok(world.journal.entries.length === 0); var entity = new Entity({ x:
-1, y: 1 }, world); ok(entity.Move(1, 0)); ok(entity.Move(1, 0)); ok(entity.Move(1, 0)); deepEqual(entity.location, { x: 4, y: 1 }); ok(!world.Rewind()); ok(!world.Rewind()); ok(!world.Rewind()); deepEqual(entity.location, { x: 1, y: 1 }); entity.Move(1,
-0); equal(world.journal.entries.length, 1); deepEqual(entity.location, { x: 2, y: 1 }); }); QUnit.test("removing earth is added to journal", function() { var world = new World(4, 3); world.Build(); var catboy = new Catboy({ x: 1, y: 1 }, world); world.PlaceContent(new
-Earth(), { x: 2, y: 1 }); ok(catboy.Move(1, 0)); deepEqual(world.journal.entries.length, 2); deepEqual(world.journal.Peek().action, Action.eDig); ok(world.journal.Peek().content instanceof Earth); deepEqual(world.journal.Peek().location, { x: 2, y: 1
-}); }); QUnit.test("rewind restores earth and moves player", function() { var world = new World(4, 3); world.Build(); var catboy = new Catboy({ x: 1, y: 1 }, world); world.PlaceContent(new Earth(), { x: 2, y: 1 }); ok(catboy.Move(1, 0)); world.Rewind();
-world.Rewind(); ok(world.GetContent({ x: 2, y: 1 }) instanceof Earth); deepEqual(catboy.location, { x: 1, y: 1 }); }); QUnit.test("rewind removes earth and moves player", function() { var world = new World(4, 3); world.Build(); var catboy = new Catboy({
-x: 1, y: 1 }, world); world.PlaceContent(new Earth(), { x: 2, y: 1 }); ok(catboy.Move(1, 0)); ok(world.Rewind()); ok(!world.Rewind()); ok(world.GetContent({ x: 2, y: 1 }) instanceof Earth); deepEqual(catboy.location, { x: 1, y: 1 }); ok(world.FastForward());
-deepEqual(catboy.location, { x: 2, y: 1 }); ok(!world.FastForward()); ok(world.GetContent({ x: 2, y: 1 }) instanceof EmptySpace); }); QUnit.test("despatching enemy is added to journal", function() { var world = new World(4, 3); world.Build(); var catboy
-= new Catboy({ x: 1, y: 1 }, world); world.AddEntity(new Enemy({ x: 2, y: 1 }, world)); ok(catboy.Move(1, 0)); equal(world.journal.entries.length, 2); deepEqual(world.journal.entries[0].action, Action.eMove); ok(world.journal.entries[0].entity instanceof
-Catboy); deepEqual(world.journal.entries[0].movement, { dx: 1, dy: 0 }); deepEqual(world.journal.entries[1].action, Action.eDespatch); ok(world.journal.entries[1].entity instanceof Enemy); deepEqual(world.journal.entries[1].location, { x: 2, y: 1 });
-}); QUnit.test("rewind restores enemies", function() { var world = new World(4, 3); world.Build(); var catboy = new Catboy({ x: 1, y: 1 }, world); world.AddEntity(catboy); world.AddEntity(new Enemy({ x: 2, y: 1 }, world)); ok(catboy.Move(1, 0)); ok(world.Rewind());
-ok(!world.Rewind()); deepEqual(catboy.location, { x: 1, y: 1 }); ok(world.GetEntity({ x: 2, y: 1 }) instanceof Enemy); }); QUnit.test("fast forward redespaches enemies", function() { var world = new World(4, 3); world.Build(); var catboy = new Catboy({
-x: 1, y: 1 }, world); world.AddEntity(catboy); world.AddEntity(new Enemy({ x: 2, y: 1 }, world)); ok(catboy.Move(1, 0)); ok(world.Rewind()); ok(!world.Rewind()); equal(world.population, 1); deepEqual(catboy.location, { x: 1, y: 1 }); ok(world.GetEntity({
-x: 2, y: 1 }) instanceof Enemy); ok(world.FastForward()); deepEqual(catboy.location, { x: 2, y: 1 }); ok(!world.FastForward()); ok(world.GetEntity({ x: 2, y: 1 }) instanceof Catboy); equal(world.population, 0); }); QUnit.test("entity hitting ground generates
-gui dropped event", function() { var world = new World(3, 4); world.Build(); ok(world.journal.entries.length === 0); var entity = new Entity({ x: 1, y: 2 }, world); ok(entity.Update()); ok(world.guiEvents.length == 1); equal(world.guiEvents[world.guiEvents.length
-- 1].event, GuiEvent.eDropped); }); // test keyhandling
+"
+<div id="qunit">
+    <h1 id="qunit-header"><a href="file:///Users/nige/Projects/vscode-qunit/test.html">Catrap</a> </h1>
+    <h2 id="qunit-banner" class="qunit-fail"></h2>
+    <div id="qunit-testrunner-toolbar"><span class="qunit-url-config"><label for="qunit-urlconfig-hidepassed" title="Only show tests and assertions that fail. Stored as query-strings."><input id="qunit-urlconfig-hidepassed" name="hidepassed" type="checkbox" title="Only show tests and assertions that fail. Stored as query-strings.">Hide passed tests</label><label for="qunit-urlconfig-noglobals" title="Enabling this will test if any test introduces new properties on the global object (`window` in Browsers). Stored as query-strings."><input id="qunit-urlconfig-noglobals" name="noglobals" type="checkbox" title="Enabling this will test if any test introduces new properties on the global object (`window` in Browsers). Stored as query-strings.">Check for Globals</label><label for="qunit-urlconfig-notrycatch" title="Enabling this will run tests outside of a try-catch block. Makes debugging exceptions in IE reasonable. Stored as query-strings."><input id="qunit-urlconfig-notrycatch" name="notrycatch" type="checkbox" title="Enabling this will run tests outside of a try-catch block. Makes debugging exceptions in IE reasonable. Stored as query-strings.">No try-catch</label></span>
+        <form id="qunit-modulefilter"><label id="qunit-modulefilter-search-container">Module: <input id="qunit-modulefilter-search" title="Type to filter list. Current selection:
+All modules"></label>
+            <div id="qunit-modulefilter-dropdown" style="display: none;"><span id="qunit-modulefilter-actions"><button style="display: none;">Apply</button><button type="reset" style="display: none;">Reset</button><label class="clickable checked"><input type="checkbox" checked="checked">All modules</label></span>
+                <ul id="qunit-modulefilter-dropdown-list">
+                    <li><label class="clickable"><input type="checkbox" value="ccf10dc6">world</label></li>
+                    <li><label class="clickable"><input type="checkbox" value="526d04c9">world &gt; rock</label></li>
+                </ul>
+            </div>
+        </form>
+        <form class="qunit-filter"><label>Filter: <input type="text" name="filter" id="qunit-filter-input"></label> <button>Go</button></form>
+        <div class="clearfix"></div>
+    </div>
+    <h2 id="qunit-userAgent">QUnit 2.4.1; Mozilla/5.0 Chrome/10.0.613.0 Safari/534.15 Zombie.js/5.0.7</h2>
+    <p id="qunit-testresult" class="result">
+        <div id="qunit-testresult-display">70 tests completed in 498 milliseconds, with 3 failed, 0 skipped, and 0 todo.<br><span class="passed">231</span> assertions of <span class="total">234</span> passed, <span class="failed">3</span> failed.</div>
+        <div id="qunit-testresult-controls"></div>
+        <div class="clearfix"></div>
+    </p>
+    <ol id="qunit-tests">
+        <li id="qunit-test-output-3c2ff1ae" class="fail"><strong><span class="test-name">locations can be compared</span> <b class="counts">(<b class="failed">1</b>, <b class="passed">2</b>, 3)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=3c2ff1ae">Rerun</a><span class="runtime">7 ms</span>
+            <ol class="qunit-assert-list">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="fail"><span class="test-message">failed, expected argument to be falsy, was: true</span><span class="runtime">@ 3 ms</span>
+                    <table>
+                        <tbody>
+                            <tr class="test-expected">
+                                <th>Expected: </th>
+                                <td><pre>false</pre></td>
+                            </tr>
+                            <tr class="test-actual">
+                                <th>Result: </th>
+                                <td><pre>true</pre></td>
+                            </tr>
+                            <tr class="test-source">
+                                <th>Source: </th>
+                                <td><pre>    at Object.&lt;anonymous&gt; (file:///Users/nige/Projects/vscode-qunit/tests.js:7:12)</pre></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 6 ms</span></li>
+            </ol>
+            <p class="qunit-source"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:1:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-d5c830bb" class="pass"><strong><span class="test-name">catboy can created and placed in world</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=d5c830bb">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:46:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-4b413750" class="pass"><strong><span class="test-name">item can't be destroyed</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=4b413750">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:55:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-12f8d8fe" class="pass"><strong><span class="test-name">earth can be destroyed</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=12f8d8fe">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:60:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-ce51d2e2" class="pass"><strong><span class="test-name">earth-ledge can be destroyed</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=ce51d2e2">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:65:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-fbe8897e" class="pass"><strong><span class="test-name">earth-ledge can be destroyed </span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=fbe8897e">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:70:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-cfc5287d" class="pass"><strong><span class="test-name">demon can be destroyed</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=cfc5287d">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:75:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-b9060d37" class="pass"><strong><span class="test-name">troll can be destroyed</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=b9060d37">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:80:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-2a79b959" class="pass"><strong><span class="test-name">ghost can be destroyed</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=2a79b959">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:85:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-fb20019b" class="pass"><strong><span class="test-name">phantom can be destroyed</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=fb20019b">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:90:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-57263e87" class="pass"><strong><span class="test-name">item can't be occupied</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=57263e87">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:96:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-7bd72642" class="pass"><strong><span class="test-name">empty space can be occupied</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=7bd72642">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:101:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-00ba84a9" class="pass"><strong><span class="test-name">ladder can be occupied</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=00ba84a9">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:106:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-32ae436e" class="pass"><strong><span class="test-name">catboy should drop</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=32ae436e">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:112:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-8fa433f2" class="pass"><strong><span class="test-name">catgirl should drop</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=8fa433f2">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:117:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-97fd39ed" class="pass"><strong><span class="test-name">boulder should drop</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=97fd39ed">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:122:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-72a8cc08" class="pass"><strong><span class="test-name">enemy should drop</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=72a8cc08">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:127:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-4a6555bc" class="pass"><strong><span class="test-name">ghost should not drop</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=4a6555bc">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:132:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-ea34a703" class="pass"><strong><span class="test-name">entity drops</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=ea34a703">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:137:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-b505265a" class="pass"><strong><span class="test-name">ghost doesn't drop</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=b505265a">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:147:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-f7714885" class="pass"><strong><span class="test-name">entity doesn't drop off ladder</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=f7714885">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:158:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-841cac02" class="pass"><strong><span class="test-name">catboy can move horizontally</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=841cac02">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:171:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-3f7e45ed" class="pass"><strong><span class="test-name">catboy can be blocked</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=3f7e45ed">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:181:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-0ac3c527" class="pass"><strong><span class="test-name">catboy destroys items</span> <b class="counts">(3)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=0ac3c527">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:189:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-a8a73144" class="pass"><strong><span class="test-name">catboy goes up ladder into emptyspace</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=a8a73144">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:200:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-ee9c81cb" class="pass"><strong><span class="test-name">catboy goes up ladder</span> <b class="counts">(6)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=ee9c81cb">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:212:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-d8878a26" class="pass"><strong><span class="test-name">catboy can be blocked at top of ladder</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=d8878a26">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:227:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-83c94424" class="pass"><strong><span class="test-name">catboy goes go down ladder</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=83c94424">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:238:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-1a830b14" class="pass"><strong><span class="test-name">catboy can do down ladder from empty space</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=1a830b14">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:249:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-bb0da077" class="pass"><strong><span class="test-name">catboy can't drop off ladder into earth</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=bb0da077">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:260:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-51707d36" class="pass"><strong><span class="test-name">catboy drops off ladder into empty space</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=51707d36">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:272:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-ad6a6b99" class="pass"><strong><span class="test-name">entity can be added to world</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=ad6a6b99">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:284:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-228572d1" class="pass"><strong><span class="test-name">entities can be updated</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=228572d1">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:291:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-3fe896cb" class="pass"><strong><span class="test-name">update world returns true until entities are static</span> <b class="counts">(6)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=3fe896cb">Rerun</a><span class="runtime">5 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:301:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-3615791e" class="pass"><strong><span class="test-name">catboy is blocked by other entities</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=3615791e">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:316:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-0e09d81e" class="pass"><strong><span class="test-name">entity can't push</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=0e09d81e">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:326:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-4c9ab82d" class="pass"><strong><span class="test-name">player can push</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=4c9ab82d">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:331:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-8ce3d807" class="pass"><strong><span class="test-name">only active player can push</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=8ce3d807">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:336:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-270c9c08" class="pass"><strong><span class="test-name">boulders can be pushed</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=270c9c08">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:344:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-5ed9ffa3" class="pass"><strong><span class="test-name">catboy pushes boulder</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=5ed9ffa3">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:349:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-a23ccdbd" class="pass"><strong><span class="test-name">catboy can't push boulder into rock</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=a23ccdbd">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:360:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-a49f94f2" class="pass"><strong><span class="test-name">catboy can't push boulder into earth</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=a49f94f2">Rerun</a><span class="runtime">8 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:370:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-e2b83759" class="pass"><strong><span class="test-name">boulder can't push boulder</span> <b class="counts">(4)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=e2b83759">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:381:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-741c0d4a" class="pass"><strong><span class="test-name">dispatch reduces population</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=741c0d4a">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:395:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-dfad1c0e" class="pass"><strong><span class="test-name">enemy can be despatched</span> <b class="counts">(4)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=dfad1c0e">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:404:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-1887ebfe" class="pass"><strong><span class="test-name">world can be populated from string</span> <b class="counts">(23)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=1887ebfe">Rerun</a><span class="runtime">11 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 5 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 5 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 5 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 6 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 6 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 7 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 7 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 8 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 8 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 8 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 9 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 10 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 10 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 11 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:417:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-3ccab21d" class="pass"><strong><span class="test-name">at beginning is true for empty journal</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=3ccab21d">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:473:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-2fedde39" class="pass"><strong><span class="test-name">at end is true if journal has not been rewound</span> <b class="counts">(3)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=2fedde39">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:479:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-51c33f00" class="pass"><strong><span class="test-name">journal get previous returns previous entry</span> <b class="counts">(3)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=51c33f00">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:488:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-95408c80" class="pass"><strong><span class="test-name">journal get next returns next entry</span> <b class="counts">(8)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=95408c80">Rerun</a><span class="runtime">4 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:498:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-b6be7678" class="pass"><strong><span class="test-name">entity movement is added to journal</span> <b class="counts">(7)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=b6be7678">Rerun</a><span class="runtime">4 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:516:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-75feed38" class="pass"><strong><span class="test-name">entity drop is added to journal</span> <b class="counts">(7)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=75feed38">Rerun</a><span class="runtime">4 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:530:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-060c3bb2" class="pass"><strong><span class="test-name">rewind returns false when the journal is empty</span> <b class="counts">(1)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=060c3bb2">Rerun</a><span class="runtime">1 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:545:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-fdc25a5f" class="pass"><strong><span class="test-name">rewind moves player back</span> <b class="counts">(6)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=fdc25a5f">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:552:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-f348db36" class="pass"><strong><span class="test-name">rewind lifts player back up</span> <b class="counts">(6)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=f348db36">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:564:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-160d55c0" class="pass"><strong><span class="test-name">fastforward replays previous moves</span> <b class="counts">(7)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=160d55c0">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:576:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-3d65dd8e" class="pass"><strong><span class="test-name">journal peek returns current entry</span> <b class="counts">(6)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=3d65dd8e">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:589:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-aa0ddfb2" class="pass"><strong><span class="test-name">fastforward drops player down</span> <b class="counts">(10)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=aa0ddfb2">Rerun</a><span class="runtime">7 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 5 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 5 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 6 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 6 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:602:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-a28f6650" class="pass"><strong><span class="test-name">adding to journal truncates later moves</span> <b class="counts">(11)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=a28f6650">Rerun</a><span class="runtime">5 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 5 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:618:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-ca876f0f" class="pass"><strong><span class="test-name">removing earth is added to journal</span> <b class="counts">(5)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=ca876f0f">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:636:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-897ffd50" class="pass"><strong><span class="test-name">rewind restores earth and moves player</span> <b class="counts">(3)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=897ffd50">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:648:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-b9b63ef8" class="pass"><strong><span class="test-name">rewind removes earth and moves player</span> <b class="counts">(9)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=b9b63ef8">Rerun</a><span class="runtime">12 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 0 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 10 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 10 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 11 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 11 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 11 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:660:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-6121c440" class="pass"><strong><span class="test-name">despatching enemy is added to journal</span> <b class="counts">(8)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=6121c440">Rerun</a><span class="runtime">4 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:677:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-737c25d4" class="pass"><strong><span class="test-name">rewind restores enemies</span> <b class="counts">(5)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=737c25d4">Rerun</a><span class="runtime">4 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:692:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-de5aae86" class="pass"><strong><span class="test-name">fast forward redespaches enemies</span> <b class="counts">(11)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=de5aae86">Rerun</a><span class="runtime">6 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 3 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 5 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 5 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:705:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-baea323a" class="pass"><strong><span class="test-name">entity hitting ground generates gui dropped event</span> <b class="counts">(4)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=baea323a">Rerun</a><span class="runtime">2 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at file:///Users/nige/Projects/vscode-qunit/tests.js:725:7 at ContextifyScript.Script.runInContext (vm.js:32:29) at Object.runInContext (vm.js:87:6) at window._evaluate (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/document.js:284:75)
+                at Object.DOM.languageProcessors.javascript (/Users/nige/Projects/vscode-qunit/node_modules/zombie/lib/dom/scripts.js:29:12) at core.(anonymous function)._eval (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/level2/html.js:1780:47)
+                at exports.readFile.fs.createReadStream.encoding (/Users/nige/Projects/vscode-qunit/node_modules/zombie/node_modules/jsdom/lib/jsdom/browser/resource-loader.js:25:22)</p>
+        </li>
+        <li id="qunit-test-output-713308c1" class="pass"><strong><span class="module-name">world</span>: <span class="test-name">world can be constructed</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=713308c1">Rerun</a><span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at Object.
+                <anonymous> (file:///Users/nige/Projects/vscode-qunit/tests.js:12:11)</anonymous>
+            </p>
+        </li>
+        <li id="qunit-test-output-aab8e8a2" class="pass"><strong><span class="module-name">world</span>: <span class="test-name">world can be constructed with alternate size</span> <b class="counts">(2)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=aab8e8a2">Rerun</a>
+            <span class="runtime">3 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+            </ol>
+            <p class="qunit-source qunit-collapsed"><strong>Source: </strong> at Object.
+                <anonymous> (file:///Users/nige/Projects/vscode-qunit/tests.js:18:11)</anonymous>
+            </p>
+        </li>
+        <li id="qunit-test-output-a74fd01e" class="fail"><strong><span class="module-name">world &gt; rock</span>: <span class="test-name">world is full of rock</span> <b class="counts">(<b class="failed">1</b>, <b class="passed">3</b>, 4)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=a74fd01e">Rerun</a>
+            <span class="runtime">5 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 2 ms</span></li>
+                <li class="fail"><span class="test-message">failed, expected argument to be falsy, was: true</span><span class="runtime">@ 2 ms</span>
+                    <table>
+                        <tbody>
+                            <tr class="test-expected">
+                                <th>Expected: </th>
+                                <td><pre>false</pre></td>
+                            </tr>
+                            <tr class="test-actual">
+                                <th>Result: </th>
+                                <td><pre>true</pre></td>
+                            </tr>
+                            <tr class="test-source">
+                                <th>Source: </th>
+                                <td><pre>    at Object.&lt;anonymous&gt; (file:///Users/nige/Projects/vscode-qunit/tests.js:32:20)</pre></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 5 ms</span></li>
+            </ol>
+            <p class="qunit-source"><strong>Source: </strong> at Object.
+                <anonymous> (file:///Users/nige/Projects/vscode-qunit/tests.js:26:15)</anonymous>
+            </p>
+        </li>
+        <li id="qunit-test-output-1e170df9" class="fail"><strong><span class="module-name">world &gt; rock</span>: <span class="test-name">world is empty space surrounded by rock</span> <b class="counts">(<b class="failed">1</b>, <b class="passed">3</b>, 4)</b></strong><a href="file:///Users/nige/Projects/vscode-qunit/test.html?testId=1e170df9">Rerun</a>
+            <span class="runtime">5 ms</span>
+            <ol class="qunit-assert-list qunit-collapsed">
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 1 ms</span></li>
+                <li class="fail"><span class="test-message">failed, expected argument to be falsy, was: true</span><span class="runtime">@ 2 ms</span>
+                    <table>
+                        <tbody>
+                            <tr class="test-expected">
+                                <th>Expected: </th>
+                                <td><pre>false</pre></td>
+                            </tr>
+                            <tr class="test-actual">
+                                <th>Result: </th>
+                                <td><pre>true</pre></td>
+                            </tr>
+                            <tr class="test-source">
+                                <th>Source: </th>
+                                <td><pre>    at Object.&lt;anonymous&gt; (file:///Users/nige/Projects/vscode-qunit/tests.js:41:20)</pre></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </li>
+                <li class="pass"><span class="test-message">okay</span><span class="runtime">@ 4 ms</span></li>
+            </ol>
+            <p class="qunit-source"><strong>Source: </strong> at Object.
+                <anonymous> (file:///Users/nige/Projects/vscode-qunit/tests.js:35:15)</anonymous>
+            </p>
+        </li>
+    </ol>
+</div>
+<div id="qunit-fixture"></div>
+<script src="catrap-engine.js"></script>
+<script src="qunit.js"></script>
+<script src="tests.js"></script>
+
+
+
+"

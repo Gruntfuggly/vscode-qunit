@@ -28,7 +28,26 @@
         "command": "vscode-qunit.runTests",
         "title": "Run qunit tests"
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Trigger Task on Save configuration",
+      "properties": {
+        "vscode-qunit.executeFile": {
+          "type": "string",
+          "description": "HTML file to execute tests"
+        },
+        "vscode-qunit.testsFile": {
+          "type": "string",
+          "description": "File containing tests"
+        },
+        "vscode-qunit.showExecutionTimes": {
+          "type": "boolean",
+          "description": "Add executiom times to each test",
+          "default": false
+        }
+      }
+    }
   },
   "scripts": {},
   "devDependencies": {
@@ -37,7 +56,6 @@
     "cheerio": "^1.0.0-rc.2",
     "eslint": "^3.6.0",
     "mocha": "^2.3.3",
-    "qunit": "^2.4.1",
     "typescript": "^2.0.3",
     "vscode": "^1.0.0",
     "zombie": "^5.0.7"
