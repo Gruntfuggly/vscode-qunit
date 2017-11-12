@@ -7,43 +7,49 @@ QUnit.test( "locations can be compared", function()
     ok( !SameLocation( location1, location2 ) );
     ok( SameLocation( location1, location3 ) );
 } );
-QUnit.test( "world can be constructed", function()
+QUnit.module( "world" )
 {
-    var world = new World( 10, 20 );
-    equal( world.GetWidth(), 10 );
-    equal( world.GetHeight(), 20 );
-} );
-QUnit.test( "world can be constructed with alternate size", function()
-{
-    var world = new World( 11, 8 );
-    equal( world.GetWidth(), 11 );
-    equal( world.GetHeight(), 8 );
-} );
-QUnit.test( "world is full of rock", function()
-{
-    var world = new World( 2, 2 );
-    world.Build();
-    ok( world.GetContent( { x: 0, y: 0 } ) instanceof Rock );
-    ok( world.GetContent( { x: 1, y: 0 } ) instanceof Rock );
-    ok( world.GetContent( { x: 0, y: 1 } ) instanceof Rock );
-    ok( !world.GetContent( { x: 1, y: 1 } ) instanceof Rock );
-} );
-QUnit.test( "world is empty space surrounded by rock", function()
-{
-    var world = new World( 4, 4 );
-    world.Build();
-    ok( world.GetContent( { x: 1, y: 1 } ) instanceof EmptySpace );
-    ok( world.GetContent( { x: 2, y: 1 } ) instanceof EmptySpace );
-    ok( world.GetContent( { x: 1, y: 2 } ) instanceof EmptySpace );
-    ok( world.GetContent( { x: 2, y: 2 } ) instanceof EmptySpace );
-} );
+    QUnit.test( "world can be constructed", function()
+    {
+        var world = new World( 10, 20 );
+        equal( world.GetWidth(), 10 );
+        equal( world.GetHeight(), 20 );
+    } );
+    QUnit.test( "world can be constructed with alternate size", function()
+    {
+        var world = new World( 11, 8 );
+        equal( world.GetWidth(), 11 );
+        equal( world.GetHeight(), 8 );
+    } );
+    QUnit.test( "world is full of rock", function()
+    {
+        var world = new World( 2, 2 );
+        world.Build();
+        ok( world.GetContent( { x: 0, y: 0 } ) instanceof Rock );
+        ok( world.GetContent( { x: 1, y: 0 } ) instanceof Rock );
+        ok( world.GetContent( { x: 0, y: 1 } ) instanceof Rock );
+        ok( world.GetContent( { x: 1, y: 1 } ) instanceof Rock );
+    } );
+    QUnit.test( "world is empty space surrounded by rock", function()
+    {
+        var world = new World( 4, 4 );
+        world.Build();
+        ok( world.GetContent( { x: 1, y: 1 } ) instanceof EmptySpace );
+        ok( world.GetContent( { x: 2, y: 1 } ) instanceof EmptySpace );
+        ok( world.GetContent( { x: 1, y: 2 } ) instanceof EmptySpace );
+        ok( world.GetContent( { x: 2, y: 2 } ) instanceof EmptySpace );
+    } );
+}
+
 QUnit.test( "catboy can created and placed in world", function()
 {
     var world = new World( 3, 4 );
     world.Build();
     ok( world.GetContent( { x: 1, y: 1 } ) instanceof EmptySpace );
     world.AddEntity( new Catboy( { x: 1, y: 1 }, world ) );
-    ok( world.GetEntity( { x: 1, y: 1 } ) instanceof Catboy );
+    // ok( world.GetEntity( { x: 1, y: 1 } ) instanceof Catboy );
+    ok( world.GetEntity( { x: 1, y: 1 } ) instanceof EmptySpace );
+    ok( false );
 } );
 
 QUnit.test( "item can't be destroyed", function()

@@ -8,10 +8,30 @@
  * https://jquery.org/license/
  */
 
-function lineNumber()
+function ln()
 {
 	var e = new Error();
-	return e.stack.toString().split(/\n/)[3];
+	if( !e.stack ) try
+	{
+		// IE requires the Error to actually be throw or else the Error's 'stack'
+		// property is undefined.
+		throw e;
+	} catch( e )
+	{
+		if( !e.stack )
+		{
+			return 0; // IE < 10, likely
+		}
+	}
+	var stack = e.stack.toString().split( /\r\n|\n/ );
+	// We want our caller's frame. It's index into |stack| depends on the
+	// browser and browser version, so we need to search for the second frame:
+	var frameRE = /:(\d+):(?:\d+)[^\d]*$/;
+	do
+	{
+		var frame = stack.shift();
+	} while( !frameRE.exec( frame ) && stack.length );
+	return frameRE.exec( stack.shift() )[ 1 ];
 }
 
 (function( window ) {
@@ -268,6 +288,7 @@ Test.prototype = {
 				li = document.createElement( "li" );
 				li.className = assertion.result ? "pass" : "fail";
 				li.innerHTML = assertion.message || ( assertion.result ? "okay" : "failed" );
+				li.className += ( " " + lineNumber() );
 				ol.appendChild( li );
 
 				if ( assertion.result ) {
@@ -534,7 +555,7 @@ assert = {
 				message: msg
 			};
 
-		msg = "<span class='test-message' line='" + lineNumber() + "'>" + escapeText( msg ) + "</span>";
+		msg = "<span class='test-message'>" + escapeText( msg ) + "</span>";
 
 		if ( !result ) {
 			source = sourceFromStacktrace( 2 );
@@ -934,7 +955,7 @@ extend( QUnit, {
 			};
 
 		message = escapeText( message ) || ( result ? "okay" : "failed" );
-		message = "<span class='test-message' line='" + lineNumber() + "'>" + message + "</span>";
+		message = "<span class='test-message'>" + message + "</span>";
 		output = message;
 
 		if ( !result ) {
@@ -979,7 +1000,7 @@ extend( QUnit, {
 			};
 
 		message = escapeText( message ) || "error";
-		message = "<span class='test-message' line='" + lineNumber() + "'>" + message + "</span>";
+		message = "<span class='test-message'>" + message + "</span>";
 		output = message;
 
 		output += "<table>";

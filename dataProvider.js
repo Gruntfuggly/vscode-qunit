@@ -1,9 +1,18 @@
 Object.defineProperty( exports, "__esModule", { value: true } );
-var vsc = require( "vscode" );
+var vscode = require( 'vscode' );
 var path = require( "path" );
-// var DOMParser = require( "xmldom" ).DOMParser;
 var cheerio = require( 'cheerio' ); // https://github.com/cheeriojs/cheerio
-var targets = {};
+
+var showTimes = false;
+
+var failed = false;
+
+var tests = [];
+var moduleList = {};
+var results = {};
+var asserts = {};
+var times = {};
+var modules = {};
 
 class QunitTestResultsDataProvider
 {
@@ -11,130 +20,159 @@ class QunitTestResultsDataProvider
     {
         this._context = _context;
 
+        tests = [];
+        moduleList = {};
+        results = {};
+        asserts = {};
+        times = {};
+        modules = {};
+
         var $ = cheerio.load( html );
-        $( '#qunit-tests > li' ).each( function( i )
+        $( '#qunit-tests > li' ).each( function()
         {
-            console.log( $( this ).prop( "class" ) + ":" + $( this ).find( "span.test-name" ).html() );
+            var test = $( this ).find( "span.test-name" ).text();
+            tests.push( "test>" + test );
+            // tests.push( test );
+            results[ test ] = $( this ).prop( "class" );
+            times[ test ] = $( this ).find( "span.runtime" ).text();
+            var module = $( this ).find( "span.module-name" ).text();
+            if( module )
+            {
+                moduleList[ "module>" + module ] = true;
+                // moduleList.push( module );
+                modules[ "test>" + test ] = module;
+            }
+            $( this ).find( ".qunit-assert-list > li" ).each( function( i )
+            {
+                if( asserts[ test ] === undefined )
+                {
+                    asserts[ test ] = [];
+                }
+                asserts[ test ].push( test + ":" + i + ":" + $( this ).prop( "class" ) );
+            } );
         } );
 
-        this._onDidChangeTreeData = new vsc.EventEmitter();
+        failed = parseInt( $( '#qunit-testresult > .failed' ).text() );
+
+        this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-        vsc.window.onDidChangeActiveTextEditor( () =>
+        vscode.window.onDidChangeActiveTextEditor( () =>
         {
             this._refreshTree();
         } );
-        vsc.workspace.onDidChangeTextDocument( () =>
+        vscode.workspace.onDidChangeTextDocument( () =>
         {
             this._refreshTree();
         } );
     }
     get activeEditor()
     {
-        return vsc.window.activeTextEditor || null;
+        return vscode.window.activeTextEditor || null;
     }
     getChildren( element )
     {
-        if( !this._xmlDocument )
+        if( !element )
         {
-            this._refreshTree();
+            return [ "Tests" ];
         }
-        if( element )
+        else if( element === "Tests" )
         {
-            return [].concat( this._getChildElementArray( element ) );
-        }
-        else if( this._xmlDocument )
-        {
-            return [ this._xmlDocument.lastChild ];
+            var topLevel = Object.keys( moduleList );
+            tests.map( function( test )
+            {
+                if( modules[ test ] !== undefined )
+                {
+                    topLevel.push( test );
+                }
+            } );
+            return topLevel;
         }
         else
         {
-            return [ "root" ];
+            var parts = element.split( '>' );
+            var name = parts.slice( 1 ).join( '>' );
+            if( parts[ 0 ] === "module" )
+            {
+                return undefined;
+            }
+            else if( parts[ 0 ] === "test" )
+            {
+                return asserts[ name ];
+            }
+            return undefined;
         }
     }
+
+    getState( status )
+    {
+        if( status === "pass" )
+        {
+            return vscode.TreeItemCollapsibleState.Collapsed;
+        }
+        return vscode.TreeItemCollapsibleState.Expanded;
+    }
+
     getTreeItem( element )
     {
-        let treeItem = new vsc.TreeItem( targets[ element ] );
-        if( this._getChildElementArray( element ).length > 0 )
+        var mainparts = element.split( '>' );
+        var name = mainparts.length > 1 ? mainparts.slice( 1 ).join( '>' ) : element;
+
+        var editor = vscode.window.activeTextEditor;
+        let treeItem = new vscode.TreeItem( name );
+        var parts = element.split( ':' );
+
+        if( name === "Tests" )
         {
-            if( element.nodeName == 'project' )
-                treeItem.collapsibleState = vsc.TreeItemCollapsibleState.Expanded;
-            else if( element.nodeName == 'target' )
-                treeItem.collapsibleState = vsc.TreeItemCollapsibleState.Collapsed;
+            var status = failed > 0 ? "fail" : "pass";
+            treeItem.collapsibleState = this.getState( status );
+            treeItem.iconPath = this._getIcon( status );
         }
-        treeItem.command = {
-            command: "revealLine",
-            title: "",
-            arguments: [ {
-                lineNumber: element.lineNumber - 1,
-                at: "top"
-            }]
-        };
-        // treeItem.iconPath = this._getIcon( element );
+        else if( parts.length > 2 )
+        {
+            treeItem.label = parts[ 2 ];
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+            treeItem.iconPath = this._getIcon( parts[ 2 ] );
+            treeItem.command = {
+                command: "vscode-qunit.revealTest",
+                title: "",
+                arguments: [
+                    parts[ 0 ],
+                    parts[ 1 ]
+                ]
+            };
+        }
+        else
+        {
+            if( showTimes )
+            {
+                treeItem.label += " (" + times[ element ] + ")";
+            }
+
+            treeItem.collapsibleState = this.getState( results[ name ] );
+            treeItem.iconPath = this._getIcon( results[ name ] );
+            treeItem.command = {
+                command: "vscode-qunit.revealTest",
+                title: "",
+                arguments: [
+                    name
+                ]
+            };
+        }
+
         return treeItem;
     }
-    // _getChildAttributeArray( node )
-    // {
-    //     if( !node.attributes )
-    //     {
-    //         return [];
-    //     }
-    //     let array = new Array();
-    //     for( let i = 0; i < node.attributes.length; i++ )
-    //     {
-    //         array.push( node.attributes[ i ] );
-    //     }
-    //     return array;
-    // }
 
-    // _getChildElementArray( node )
-    // {
-    //     if( !node.childNodes )
-    //     {
-    //         return [];
-    //     }
-    //     var array = new Array();
-    //     if( node.nodeName == 'project' )
-    //         targets[ node ] = node.getAttribute( 'name' );
-    //     for( let i = 0; i < node.childNodes.length; i++ )
-    //     {
-    //         let child = node.childNodes[ i ];
-    //         if( child.nodeName == "target" && child.getAttribute( 'name' ) != "" )
-    //         {
-    //             targets[ child ] = child.getAttribute( 'name' );
-    //             array.push( child );
-    //         }
-    //         else if( child.nodeName == "antcall" && child.getAttribute( 'target' ) != null )
-    //         {
-    //             targets[ child ] = child.getAttribute( 'target' );
-    //             array.push( child );
-    //         }
-    //     }
-    //     return array;
-    // }
-
-    _getIcon( element )
+    _getIcon( status )
     {
-        let type = "target";
-        if( element.nodeName == 'antcall' )
-            type = "antcall";
-        else if( element.nodeName == 'project' )
-            type = "ant";
         let icon = {
-            dark: this._context.asAbsolutePath( path.join( "resources", "icons", `${type}.dark.svg` ) ),
-            light: this._context.asAbsolutePath( path.join( "resources", "icons", `${type}.light.svg` ) )
+            dark: this._context.asAbsolutePath( path.join( "resources", "icons", status + ".svg" ) ),
+            light: this._context.asAbsolutePath( path.join( "resources", "icons", status + ".svg" ) )
         };
         return icon;
     }
+
     _refreshTree()
     {
-        // if( !this.activeEditor || this.activeEditor.document.languageId !== "xml" )
-        // {
-        //     this._xmlDocument = null;
-        //     this._onDidChangeTreeData.fire();
-        //     return;
-        // }
-        // let xml = this.activeEditor.document.getText();
-        // this._xmlDocument = new DOMParser().parseFromString( xml, "text/xml" );
         this._onDidChangeTreeData.fire();
     }
 }
