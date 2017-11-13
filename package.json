@@ -1,35 +1,76 @@
 {
-    "name": "vscode-qunit",
-    "displayName": "vscode-qunit",
-    "description": "Integrate qunit (JavaScript unit test framework) with Visual Studio Code",
-    "version": "0.0.1",
-    "publisher": "Gruntfuggly",
-    "engines": {
-        "vscode": "^1.5.0"
+  "name": "vscode-qunit",
+  "displayName": "vscode-qunit",
+  "description": "Integrate qunit (JavaScript unit test framework) with Visual Studio Code",
+  "version": "0.0.1",
+  "publisher": "Gruntfuggly",
+  "engines": {
+    "vscode": "^1.5.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./extension",
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "qunit-test-results",
+          "name": "QUnit Test Results"
+        }
+      ]
     },
-    "categories": [
-        "Other"
+    "menus": {
+      "view/title": [
+        {
+          "command": "vscode-qunit.rerunTests",
+          "when": "view == qunit-test-results",
+          "group": "navigation"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "vscode-qunit.runTests",
+        "title": "Run QUnit tests"
+      },
+      {
+        "command": "vscode-qunit.rerunTests",
+        "title": "ReRun QUnit tests",
+        "icon": {
+          "dark": "resources/icons/dark/refresh.svg",
+          "light": "resources/icons/light/refresh.svg"
+        }
+      }
     ],
-    "activationEvents": [
-        "onCommand:extension.sayHello"
-    ],
-    "main": "./extension",
-    "contributes": {
-        "commands": [{
-            "command": "extension.sayHello",
-            "title": "Hello World"
-        }]
-    },
-    "scripts": {
-        "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "node ./node_modules/vscode/bin/test"
-    },
-    "devDependencies": {
-        "typescript": "^2.0.3",
-        "vscode": "^1.0.0",
-        "mocha": "^2.3.3",
-        "eslint": "^3.6.0",
-        "@types/node": "^6.0.40",
-        "@types/mocha": "^2.2.32"
+    "configuration": {
+      "type": "object",
+      "title": "Trigger Task on Save configuration",
+      "properties": {
+        "vscode-qunit.file": {
+          "type": "string",
+          "description": "HTML file to execute tests"
+        },
+        "vscode-qunit.showExecutionTimes": {
+          "type": "boolean",
+          "description": "Add display of executiom times",
+          "default": false
+        }
+      }
     }
+  },
+  "scripts": {},
+  "devDependencies": {
+    "@types/mocha": "^2.2.32",
+    "@types/node": "^6.0.40",
+    "cheerio": "^1.0.0-rc.2",
+    "eslint": "^3.6.0",
+    "mocha": "^2.3.3",
+    "typescript": "^2.0.3",
+    "vscode": "^1.0.0",
+    "zombie": "^5.0.7"
+  }
 }
