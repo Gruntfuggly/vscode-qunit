@@ -1,30 +1,86 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-var vscode = require('vscode');
+var vscode = require( 'vscode' );
+var Browser = require( 'zombie' ); // https://www.npmjs.com/package/zombie#browser
+var TreeView = require( "./dataProvider" );
+var fs = require( 'fs' );
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-function activate(context) {
+function activate( context )
+{
+    var provider = new TreeView.QunitTestResultsDataProvider( context );
+    vscode.window.registerTreeDataProvider( 'qunit-test-results', provider );
 
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "vscode-qunit" is now active!');
+    vscode.commands.registerCommand( 'vscode-qunit.revealTest', ( location, assert ) =>
+    {
+        // TODO: Refresh on save (not rebuild)
 
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
-    var disposable = vscode.commands.registerCommand('extension.sayHello', function () {
-        // The code you place here will be executed every time your command is executed
+        var testsFile = location.file;
+        vscode.workspace.openTextDocument( testsFile ).then( function( document )
+        {
+            vscode.window.showTextDocument( document ).then( function( editor )
+            {
+                var position = new vscode.Position( location.line, location.character );
 
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World!');
-    });
+                if( assert !== undefined )
+                {
+                    var text = editor.document.getText();
+                    var remaining = text.substr( editor.document.offsetAt( position ) );
+                    var assertRegex = new RegExp( "(assert\\s*)*(\\.)*(ok|notOk|equal|notEqual|deepEqual|notDeepEqual|propEqual|notPropEqual|strictEqual|notStrictEqual)\\s*\\(", 'g' );
+                    var assertMatch;
+                    for( var i = 0; i <= assert; ++i )
+                    {
+                        assertMatch = assertRegex.exec( remaining );
+                    }
+                    position = editor.document.positionAt( text.length - remaining.length + assertMatch.index );
+                }
 
-    context.subscriptions.push(disposable);
+                editor.selection = new vscode.Selection( position, position );
+                vscode.commands.executeCommand( 'workbench.action.focusActiveEditorGroup' );
+            } );
+        } );
+    } );
+
+    function runTests()
+    {
+        provider.clear();
+
+        var file = vscode.workspace.getConfiguration( 'vscode-qunit' ).file;
+
+        if( !file )
+        {
+            vscode.window.showErrorMessage( "QUnit: Please set the file which runs your tests, in your preferences (vscode-qunit.executeFile)" );
+            provider.refresh( "" );
+        }
+        else
+        {
+            var uri = vscode.Uri.file( file ).toString();
+
+            fs.exists( file, function( exists )
+            {
+                if( exists )
+                {
+                    var browser = new Browser();
+                    browser.visit( uri, function()
+                    {
+                        provider.refresh( browser.query( 'body' ).innerHTML );
+                    } );
+                }
+                else
+                {
+                    vscode.window.showErrorMessage( "QUnit: Can't find test file '" + file + "'" );
+                    provider.refresh( "" );
+                }
+            } );
+        }
+    }
+
+    var disposable = vscode.commands.registerCommand( 'vscode-qunit.runTests', runTests );
+    var disposable = vscode.commands.registerCommand( 'vscode-qunit.refresh', runTests );
+
+    runTests();
+
+    context.subscriptions.push( disposable );
 }
 exports.activate = activate;
 
 // this method is called when your extension is deactivated
-function deactivate() {
-}
+function deactivate() { }
 exports.deactivate = deactivate;

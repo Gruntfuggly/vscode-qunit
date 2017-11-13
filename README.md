@@ -1,65 +1,47 @@
-# vscode-qunit README
+# VSCode QUnit
 
-This is the README for your extension "vscode-qunit". After writing up a brief description, we recommend including the following sections.
+This extension allows you to run your <a href="http://qunitjs.com/">QUnit</a> unit tests from inside Visual Studio Code, displaying the results in a tree view in the explorer pane. Clicking on the results in the tree view will attempt to reveal the tests and assertions in the tests file.
 
-## Features
+To run your tests, press F1, and select or enter `Run QUnit tests`, or simply click the refresh button on the QUNIT TEST RESULTS title bar. The tree will be automatically expanded to show any failing tests.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Installing
 
-For example if there is an image subfolder under your extension project workspace:
+You can install the latest version of the extension via the Visual Studio Marketplace [here](https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.vscode-qunit).
 
-\!\[feature X\]\(images/feature-x.png\)
+Alternatively, open Visual Studio code, press `Ctrl+P` or `Cmd+P` and type:
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+    > ext install vscode-qunit
 
-## Requirements
+The extension is designed to work with version 2.4.1 of QUnit. It may possibly work with older versions.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+### Source Code
 
-## Extension Settings
+The source code is available on GitHub [here](https://github.com/Gruntfuggly/vscode-qunit).
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## Configuration
 
-For example:
+To make it work, you'll need to define the path to your test HTML file:
 
-This extension contributes the following settings:
+`vscode-quint.file`
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+This should be set to the full path of the file you would normally load in the browser to execute your tests and view the results. This extension runs the file in a headless browser in order to parse the results and populate the tree.
+
+There is also a setting to control display of test execution times (off by default):
+
+`vscode-qunit.showExecutionTimes`
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Currently, revealing the assertions is done using a search with regular expressions. This works fine as long as your assertions are defined in order. If you put assertions into local functions within the test, it won't work. Sorry.
 
-## Release Notes
+The view currently can't be refreshed without rebuilding the tree. This means that the expansion state of the tree is not preserved.
 
-Users appreciate release notes as you update your extension.
+There are probably lots of use cases where it doesn't work properly. Please let me know and I'll try and accomodate them. Any feedback is welcome!
 
-### 1.0.0
+### Credits
 
-Initial release of ...
+"Pass" and "Fail" icons made by <a href="https://www.flaticon.com/authors/maxim-basinski" title="Maxim Basinski">Maxim Basinski</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>, licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a>
 
-### 1.0.1
+"Refresh" icon stolen from Patryk Zawadzki's <a href="https://marketplace.visualstudio.com/items?itemName=patrys.vscode-code-outline">Code Outline</a> extension, which was also used as inspiriation and guidance for this one.
 
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on OSX or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on OSX or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (OSX) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+"QUnit" icon stolen from the QUnit twitter account.
