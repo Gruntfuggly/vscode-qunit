@@ -3,7 +3,7 @@
   "displayName": "vscode-qunit",
   "icon": "resources/qunit.png",
   "description": "Integrate qunit (JavaScript unit test framework) with Visual Studio Code",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "Gruntfuggly",
   "repository": "https://github.com/Gruntfuggly/qunit-vscode",
   "engines": {

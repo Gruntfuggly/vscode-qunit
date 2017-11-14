@@ -1,3 +1,6 @@
+# v0.0.3 - 2017-11-14
+- Fix change log
+
 # v0.0.2 - 2017-11-14
 - Fix dependencies
 
