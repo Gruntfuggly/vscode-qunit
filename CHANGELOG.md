@@ -1,3 +1,6 @@
+# v0.0.4 - 2017-11-14
+- Fix github link
+
 # v0.0.3 - 2017-11-14
 - Fix change log
 
