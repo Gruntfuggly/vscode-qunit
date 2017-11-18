@@ -1,75 +1,90 @@
 {
-  "name": "vscode-qunit",
-  "displayName": "vscode-qunit",
-  "icon": "resources/qunit.png",
-  "description": "Integrate qunit (JavaScript unit test framework) with Visual Studio Code",
-  "version": "0.0.4",
-  "publisher": "Gruntfuggly",
-  "repository": "https://github.com/Gruntfuggly/vscode-qunit",
-  "engines": {
-    "vscode": "^1.5.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [
-    "*"
-  ],
-  "main": "./extension",
-  "contributes": {
-    "views": {
-      "explorer": [
-        {
-          "id": "qunit-test-results",
-          "name": "QUnit Test Results"
-        }
-      ]
+    "name": "vscode-qunit",
+    "displayName": "vscode-qunit",
+    "icon": "resources/qunit.png",
+    "description": "Integrate qunit (JavaScript unit test framework) with Visual Studio Code",
+    "version": "0.0.5",
+    "publisher": "Gruntfuggly",
+    "repository": "https://github.com/Gruntfuggly/vscode-qunit",
+    "engines": {
+        "vscode": "^1.5.0"
     },
-    "menus": {
-      "view/title": [
-        {
-          "command": "vscode-qunit.refresh",
-          "when": "view == qunit-test-results",
-          "group": "navigation"
-        }
-      ]
-    },
-    "commands": [
-      {
-        "command": "vscode-qunit.runTests",
-        "title": "Run tests",
-        "category": "QUnit"
-      },
-      {
-        "command": "vscode-qunit.refresh",
-        "title": "Refresh",
-        "category": "QUnit",
-        "icon": {
-          "dark": "resources/icons/dark/refresh.svg",
-          "light": "resources/icons/light/refresh.svg"
-        }
-      }
+    "categories": [
+        "Other"
     ],
-    "configuration": {
-      "type": "object",
-      "title": "Trigger Task on Save configuration",
-      "properties": {
-        "vscode-qunit.file": {
-          "type": "string",
-          "description": "HTML file to execute tests"
+    "activationEvents": [
+        "*"
+    ],
+    "main": "./extension",
+    "contributes": {
+        "views": {
+            "explorer": [
+                {
+                    "id": "qunit-test-results",
+                    "name": "QUnit Test Results"
+                }
+            ]
         },
-        "vscode-qunit.showExecutionTimes": {
-          "type": "boolean",
-          "description": "Add display of executiom times",
-          "default": "false"
+        "menus": {
+            "view/title": [
+                {
+                    "command": "vscode-qunit.refresh",
+                    "when": "view == qunit-test-results",
+                    "group": "navigation"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "vscode-qunit.setFile"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "vscode-qunit.runTests",
+                "title": "Run tests",
+                "category": "QUnit"
+            },
+            {
+                "command": "vscode-qunit.refresh",
+                "title": "Refresh",
+                "category": "QUnit",
+                "icon": {
+                    "dark": "resources/icons/dark/refresh.svg",
+                    "light": "resources/icons/light/refresh.svg"
+                }
+            },
+            {
+                "command": "vscode-qunit.setFile",
+                "title": "Set as file to run QUnit tests",
+                "category": "QUnit"
+            }
+        ],
+        "configuration": {
+            "type": "object",
+            "title": "vscode-qunit configuration",
+            "properties": {
+                "vscode-qunit.file": {
+                    "type": "string",
+                    "description": "HTML file to execute tests"
+                },
+                "vscode-qunit.showExecutionTimes": {
+                    "type": "boolean",
+                    "description": "Add display of executiom times",
+                    "default": "false"
+                }
+            }
         }
-      }
+    },
+    "scripts": {},
+    "dependencies": {
+        "cheerio": "^1.0.0-rc.2",
+        "vscode": "^1.0.0",
+        "zombie": "^5.0.7"
+    },
+    "__metadata": {
+        "id": "67dfda49-6703-4a2e-a35e-eec61409f33a",
+        "publisherDisplayName": "Gruntfuggly",
+        "publisherId": "d4906d2e-f2ee-492d-9c7c-02b6160599ec"
     }
-  },
-  "scripts": {},
-  "dependencies": {
-    "cheerio": "^1.0.0-rc.2",
-    "vscode": "^1.0.0",
-    "zombie": "^5.0.7"
-  }
 }

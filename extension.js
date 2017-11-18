@@ -46,7 +46,7 @@ function activate( context )
 
         if( !file )
         {
-            vscode.window.showErrorMessage( "QUnit: Please set the file which runs your tests, in your preferences (vscode-qunit.executeFile)" );
+            vscode.window.showErrorMessage( "QUnit: Please set the HTML file which runs your tests, in your preferences (vscode-qunit.file)" );
             provider.refresh( "" );
         }
         else
@@ -72,12 +72,39 @@ function activate( context )
         }
     }
 
-    var disposable = vscode.commands.registerCommand( 'vscode-qunit.runTests', runTests );
-    var disposable = vscode.commands.registerCommand( 'vscode-qunit.refresh', runTests );
+    function setFile( file )
+    {
+        function update( file )
+        {
+            vscode.workspace.getConfiguration( 'vscode-qunit' ).update( 'file', file ).then( function()
+            {
+                runTests();
+            } );
+        }
+
+        if( !file )
+        {
+            vscode.window.showInputBox( { prompt: "Please enter the full path to your HTML tests file:" } ).then( function( file )
+            {
+                if( file )
+                {
+                    update( file );
+                }
+            } );
+        }
+        else
+        {
+            vscode.window.showInformationMessage( "QUnit: Test file set to " + file.path );
+            update( file.path );
+        }
+    }
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand( 'vscode-qunit.runTests', runTests ),
+        vscode.commands.registerCommand( 'vscode-qunit.refresh', runTests ),
+        vscode.commands.registerCommand( 'vscode-qunit.setFile', setFile ) );
 
     runTests();
-
-    context.subscriptions.push( disposable );
 }
 exports.activate = activate;
 

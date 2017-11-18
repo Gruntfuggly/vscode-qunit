@@ -2,6 +2,8 @@
 
 This extension allows you to run your <a href="http://qunitjs.com/">QUnit</a> unit tests from inside Visual Studio Code, displaying the results in a tree view in the explorer pane. Clicking on the results in the tree view will attempt to reveal the tests and assertions in the tests file.
 
+To get started, either right click your tests file in the exlorer window and select **Set as file to run QUnit tests**, or visit your preferences and set the file manually (see Configuration below). *Note: If you use the context menu, the file is stored in your workspace preferences.*
+
 To run your tests, press F1, and select or enter `Run QUnit tests`, or simply click the refresh button on the QUNIT TEST RESULTS title bar. The tree will be automatically expanded to show any failing tests.
 
 ## Installing

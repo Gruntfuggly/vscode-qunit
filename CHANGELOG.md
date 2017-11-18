@@ -1,3 +1,7 @@
+# v0.0.5 - 2017-11-18
+- Add explorer context menu item to set tests file
+- Minor code fixes
+
 # v0.0.4 - 2017-11-14
 - Fix github link
 
