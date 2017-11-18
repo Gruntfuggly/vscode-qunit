@@ -1,3 +1,6 @@
+# v0.0.6 - 2017-11-18
+- Add screenshot to README.md
+
 # v0.0.5 - 2017-11-18
 - Add explorer context menu item to set tests file
 - Minor code fixes

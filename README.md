@@ -6,6 +6,8 @@ To get started, either right click your tests file in the exlorer window and sel
 
 To run your tests, press F1, and select or enter `Run QUnit tests`, or simply click the refresh button on the QUNIT TEST RESULTS title bar. The tree will be automatically expanded to show any failing tests.
 
+<img src="https://raw.githubusercontent.com/Gruntfuggly/vscode-qunit/master/resources/screenshot.png">
+
 ## Installing
 
 You can install the latest version of the extension via the Visual Studio Marketplace [here](https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.vscode-qunit).
