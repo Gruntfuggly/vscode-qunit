@@ -33,6 +33,7 @@ function activate( context )
                 }
 
                 editor.selection = new vscode.Selection( position, position );
+                editor.revealRange( editor.selection, vscode.TextEditorRevealType.Default );
                 vscode.commands.executeCommand( 'workbench.action.focusActiveEditorGroup' );
             } );
         } );
