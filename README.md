@@ -26,7 +26,7 @@ The source code is available on GitHub [here](https://github.com/Gruntfuggly/vsc
 
 To make it work, you'll need to define the path to your test HTML file:
 
-`vscode-quint.file`
+`vscode-qunit.file`
 
 This should be set to the full path of the file you would normally load in the browser to execute your tests and view the results. This extension runs the file in a headless browser in order to parse the results and populate the tree.
 
