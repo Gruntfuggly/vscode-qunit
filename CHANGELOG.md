@@ -1,3 +1,6 @@
+# v0.0.7 - 2018-01-19
+- Fix typo in README.md (Thanks jpsirois)
+
 # v0.0.6 - 2017-11-18
 - Add screenshot to README.md
 
