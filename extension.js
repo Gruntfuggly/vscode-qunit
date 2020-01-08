@@ -2,6 +2,7 @@ var vscode = require( 'vscode' );
 var Browser = require( 'zombie' ); // https://www.npmjs.com/package/zombie#browser
 var TreeView = require( "./dataProvider" );
 var fs = require( 'fs' );
+var path = require( 'path' );
 
 function activate( context )
 {
@@ -58,11 +59,35 @@ function activate( context )
             {
                 if( exists )
                 {
-                    var browser = new Browser();
-                    browser.visit( uri, function()
+                    if( path.extname === "html" )
                     {
-                        provider.refresh( browser.query( 'body' ).innerHTML );
-                    } );
+
+                        var browser = new Browser();
+                        browser.visit( uri, function()
+                        {
+                            provider.refresh( browser.query( 'body' ).innerHTML );
+                        } );
+                    }
+                    else if( path.extname === "js" )
+                    {
+                        var currentProcess = child_process.exec( execString, { cwd } );
+                        var results = "";
+
+                        currentProcess.stdout.on( 'data', function( data )
+                        {
+                            results += data;
+                        } );
+
+                        currentProcess.stderr.on( 'data', function( data )
+                        {
+
+                        } );
+
+                        currentProcess.on( 'close', function( code )
+                        {
+                            provider.refresh( results );
+                        } );
+                    }
                 }
                 else
                 {
