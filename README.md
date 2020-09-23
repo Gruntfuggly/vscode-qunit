@@ -1,12 +1,12 @@
 # VSCode QUnit
 
-This extension allows you to run your <a href="http://qunitjs.com/">QUnit</a> unit tests from inside Visual Studio Code, displaying the results in a tree view in the explorer pane. Clicking on the results in the tree view will attempt to reveal the tests and assertions in the tests file.
+This extension allows you to run your [QUnit](https://qunitjs.com/) unit tests from inside Visual Studio Code, displaying the results in a tree view in the explorer pane. Clicking on the results in the tree view will attempt to reveal the tests and assertions in the tests file.
 
-To get started, either right click your tests file in the exlorer window and select **Set as file to run QUnit tests**, or visit your preferences and set the file manually (see Configuration below). *Note: If you use the context menu, the file is stored in your workspace preferences.*
+To get started, either right click your tests file in the explorer window and select **Set as file to run QUnit tests**, or visit your preferences and set the file manually (see Configuration below). *Note: If you use the context menu, the file is stored in your workspace preferences.*
 
 To run your tests, press F1, and select or enter `Run QUnit tests`, or simply click the refresh button on the QUNIT TEST RESULTS title bar. The tree will be automatically expanded to show any failing tests.
 
-<img src="https://raw.githubusercontent.com/Gruntfuggly/vscode-qunit/master/resources/screenshot.png">
+![screenshot](https://raw.githubusercontent.com/Gruntfuggly/vscode-qunit/master/resources/screenshot.png)
 
 ## Installing
 
@@ -40,12 +40,12 @@ Currently, revealing the assertions is done using a search with regular expressi
 
 The view currently can't be refreshed without rebuilding the tree. This means that the expansion state of the tree is not preserved.
 
-There are probably lots of use cases where it doesn't work properly. Please let me know and I'll try and accomodate them. Any feedback is welcome!
+There are probably lots of use cases where it doesn't work properly. Please let me know and I'll try and accommodate them. Any feedback is welcome!
 
 ### Credits
 
-"Pass" and "Fail" icons made by <a href="https://www.flaticon.com/authors/maxim-basinski" title="Maxim Basinski">Maxim Basinski</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>, licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a>
+"Pass" and "Fail" icons made by [Maxim Basinski](https://www.flaticon.com/authors/maxim-basinski) from [www.flaticon.com](https://www.flaticon.com/), licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)
 
-"Refresh" icon stolen from Patryk Zawadzki's <a href="https://marketplace.visualstudio.com/items?itemName=patrys.vscode-code-outline">Code Outline</a> extension, which was also used as inspiriation and guidance for this one.
+"Refresh" icon stolen from Patryk Zawadzki's [Code Outline](https://marketplace.visualstudio.com/items?itemName=patrys.vscode-code-outline) extension, which was also used as inspiration and guidance for this one.
 
 "QUnit" icon stolen from the QUnit twitter account.
